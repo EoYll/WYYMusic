@@ -1,0 +1,24 @@
+<RCC>
+    <qresource prefix="/">
+        <file>Src/MainWindow.qml</file>
+        <file>Src/leftPage/FunctionButton.qml</file>
+        <file>Src/leftPage/LeftPage.qml</file>
+        <file>Src/playMusic/PlayMusic.qml</file>
+        <file>Src/rightPage/RightPage.qml</file>
+        <file>Src/basic/AppState​​.qml</file>
+        <file>Src/basic/qmldir</file>
+        <file>Src/rightPage/TopTitle.qml</file>
+        <file>Src/rightPage/StackPages/Settings.qml</file>
+        <file>Src/rightPage/StackPages/Text.qml</file>
+        <file>Src/baseUI/BasicCheckBox.qml</file>
+        <file>Src/baseUI/BasicRadioButton.qml</file>
+        <file>Src/baseUI/BasicComboBox.qml</file>
+        <file>Src/rightPage/StackPages/LocalMusicPage.qml</file>
+        <file>Src/baseUI/BasicMusicPlayButton.qml</file>
+        <file>Src/baseUI/BasicMainPlayMusicButon.qml</file>
+        <file>Src/baseUI/BasicTableHeaderButton.qml</file>
+        <file>Src/baseUI/BasicTableContentButton.qml</file>
+        <file>Src/baseUI/BasicMusicFuncButton.qml</file>
+        <file>Src/playMusic/LyricsPage.qml</file>
+    </qresource>
+</RCC>
