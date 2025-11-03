@@ -11,21 +11,14 @@ Item{
         anchors.rightMargin: 5
         onPressed: (mouse)=>{
             window.startSystemMove()
-            //windowHelper.startSystemMove(rootRef2)
-            //console.log(window)
-            if(window.visibility === window.Maximized){
-                window.isMaximized = true
-                maximizeImg.source="qrc:/svg/Resources/status/restoredown_a.svg"
-            }else{
-                window.isMaximized = false
-                maximizeImg.source="qrc:/svg/Resources/status/maximize_a.svg"
-            }
         }
         onReleased: {
             if(window.y<=0){
                 window.showMaximized()
-                window.isMaximized = true
-                maximizeImg.source="qrc:/svg/Resources/status/restoredown_a.svg"
+                AppState.windowIsMaximized = true
+
+            }else{
+                AppState.windowIsMaximized = false
             }
         }
     }
@@ -338,7 +331,7 @@ Item{
         //最大化
         Image {
             id: maximizeImg
-            source: "qrc:/svg/Resources/status/maximize_a.svg"
+            source: AppState.windowIsMaximized?"qrc:/svg/Resources/status/restoredown_a.svg":"qrc:/svg/Resources/status/maximize_a.svg"
             sourceSize: "16x16"
             anchors.verticalCenter: parent.verticalCenter
 
@@ -347,33 +340,20 @@ Item{
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: containsMouse?Qt.PointingHandCursor:Qt.ArrowCursor
-                onEntered: {
-                    if(window.isMaximized){
-                        maximizeImg.source="qrc:/svg/Resources/status/restoredown_b.svg"
-                    }else{
-                        maximizeImg.source="qrc:/svg/Resources/status/maximize_b.svg"
-                    }
-                }
-
-                onExited:{
-                    if(window.isMaximized){
-                        maximizeImg.source="qrc:/svg/Resources/status/restoredown_a.svg"
-                    }else{
-                        maximizeImg.source="qrc:/svg/Resources/status/maximize_a.svg"
-                    }
-                }
 
 
                 onClicked: {
-                    if(window.isMaximized){
-                        maximizeImg.source="qrc:/svg/Resources/status/maximize_a.svg"
+                    if(AppState.windowIsMaximized){
+                        //maximizeImg.source="qrc:/svg/Resources/status/maximize_a.svg"
                         window.showNormal()
-                        window.isMaximized = false
+                        //window.isMaximized = false
+                        AppState.windowIsMaximized = false
                     }else{
-                        maximizeImg.source="qrc:/svg/Resources/status/restoredown_a.svg"
+                        //maximizeImg.source="qrc:/svg/Resources/status/restoredown_a.svg"
                         window.showMaximized()
-
-                        window.isMaximized = true
+                        console.log(window.visibility === window.Maximized)
+                        //window.isMaximized = true
+                        AppState.windowIsMaximized =true
                     }
                 }
             }

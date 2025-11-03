@@ -10,7 +10,8 @@ int main(int argc, char *argv[])
     QGuiApplication app(argc, argv);
     QQmlApplicationEngine engine;
     const QUrl url(QStringLiteral("qrc:/WYYMusic/main.qml"));
-    qmlRegisterSingletonType(QUrl("qrc:/Src/basic/AppState​​.qml"),"AppState", 1,0,"AppState");
+    // 调试资源系统
+    qmlRegisterSingletonType(QUrl("qrc:/Src/basic/AppState.qml"), "AppState", 1, 0, "AppState");
     // 注册控制器
     PlayerController *playerController = PlayerController::instance();
     playerController->setParent(&app);

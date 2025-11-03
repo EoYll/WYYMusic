@@ -3,10 +3,31 @@ import Qt5Compat.GraphicalEffects
 import QtQuick.Controls.Basic 2.15
 import "../baseUI"
 import MusicPlayer 1.0
-
+import AppState 1.0
 Rectangle {
     id: bottomRectange
+    property var lyrics
     //左
+    MouseArea{
+        anchors.fill: parent
+        anchors.rightMargin: 5
+        onPressed: {
+            console.log("PlayMusic onPressed")
+        }
+
+        onClicked: {
+            console.log("PlayMusic onclicked")
+
+        }
+        onReleased: {
+            console.log("PlayMusic onReleased")
+            AppState.lyricsPageAnimation =true
+            AppState.lyricsPageVisible = true
+            AppState.lyricsPageAnimation =false
+        }
+
+    }
+
     Item {
         height: parent.height
         anchors.left: parent.left

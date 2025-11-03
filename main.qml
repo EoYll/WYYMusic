@@ -2,60 +2,58 @@ import QtQuick 2.15
 import "qrc:/Src/leftPage/"
 import "qrc:/Src/playMusic/"
 import "qrc:/Src/rightPage/"
+import "qrc:/Src/basic/"
 import "qrc:/Src/"
-
+import AppState 1.0
 MainWindow {
-    id:window
-    width:1056
+    id: window
+    width: 1056
     height: 752
     visible: true
-    color:"#00000000"
+    color: "#00000000"
     title: qsTr("Hello World")
-    flags: Qt.FramelessWindowHint|Qt.Window
+    flags: Qt.FramelessWindowHint | Qt.Window
     //onVisibleChanged: if(visible)console.log(getNativeHandle(this))
     minimumWidth: 1056
     minimumHeight: 752
-    Item{
+    Item {
         anchors {
-            top:parent.top
+            top: parent.top
             left: parent.left
             right: parent.right
             bottom: parent.bottom
-
         }
-        LeftPage{
-            id:leftRectange
-            width:204
-            anchors.top:parent.top
+        LeftPage {
+            id: leftRectange
+            width: 204
+            anchors.top: parent.top
             anchors.bottom: bottomRectange.top
-            color:"#1a1a21"
+            color: "#1a1a21"
         }
-        RightPage{
-            id:rightRectange
-            anchors.top:parent.top
+        RightPage {
+            id: rightRectange
+            anchors.top: parent.top
             anchors.bottom: bottomRectange.top
-            anchors.left:leftRectange.right
+            anchors.left: leftRectange.right
             anchors.right: parent.right
-            color:"#13131a"
+            color: "#13131a"
             rootRef: window
         }
-        PlayMusic{
-            id:bottomRectange
-            height:80
+        PlayMusic {
+            id: bottomRectange
+            height: 80
+            lyrics: lyricsPage
             anchors.left: parent.left
-            anchors.right:parent.right
-            anchors.bottom:parent.bottom
-            color:"#2d2d37"
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            color: "#2d2d37"
         }
-        LyricsPage{
-            anchors.fill:parent
-
+        LyricsPage {
+            id:lyricsPage
+            width: parent.width
+            height: parent.height
+            x:0
+            y:AppState.lyricsPageVisible?0:parent.height
         }
     }
-
-
-
-
-
-
 }

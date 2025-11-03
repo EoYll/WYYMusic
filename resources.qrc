@@ -48,5 +48,8 @@
         <file>Resources/playMusicFunc/yinliangda.svg</file>
         <file>Resources/playMusicFunc/yinliangxiao.svg</file>
         <file>Resources/playMusicFunc/yinliangzhong.svg</file>
+        <file>Resources/status/quanping.svg</file>
+        <file>Resources/status/shouqi.svg</file>
+        <file>Resources/status/xiangxia-1.svg</file>
     </qresource>
 </RCC>
