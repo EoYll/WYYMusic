@@ -32,7 +32,7 @@ class PlayerController : public QObject {
     Q_PROPERTY(int duration READ duration NOTIFY durationChanged)
     Q_PROPERTY(bool playing READ isPlaying NOTIFY playingChanged)
     Q_PROPERTY(int currentIndex READ currentIndex NOTIFY currentIndexChanged)
-    Q_PROPERTY(float currentVolume READ currentVolume  NOTIFY currentVolumeChanged)
+    Q_PROPERTY(float currentVolume READ currentVolume WRITE setCurrentVolume NOTIFY currentVolumeChanged)
     // Q_PROPERTY(MusicModel m_musicModel  READ musicList NOTIFY musicListChanged)
     Q_PROPERTY(MusicModel* musicList READ musicList CONSTANT)
     Q_PROPERTY(QString coverSource READ coverSource NOTIFY coverChanged)
@@ -67,7 +67,6 @@ public:
     Q_INVOKABLE void playSong(int index);
     Q_INVOKABLE void next(const QString &mode);
     Q_INVOKABLE void previous(const QString &mode);
-    Q_INVOKABLE void setVolume(float volume);
     Q_INVOKABLE void setCover();
 
 signals:
@@ -82,7 +81,7 @@ signals:
     void currentVolumeChanged();
 public slots:
     void setCurrentPosition(int position);
-
+    void setCurrentVolume(float volume);
 private:
 
     explicit PlayerController(QObject *parent = nullptr);

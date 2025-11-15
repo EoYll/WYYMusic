@@ -4,11 +4,12 @@ import QtQuick.Controls.Basic 2.15
 import "../baseUI"
 import MusicPlayer 1.0
 import AppState 1.0
+
 Rectangle {
     id: bottomRectange
     property var lyrics
     //左
-    MouseArea{
+    MouseArea {
         anchors.fill: parent
         anchors.rightMargin: 5
         onPressed: {
@@ -17,15 +18,13 @@ Rectangle {
 
         onClicked: {
             console.log("PlayMusic onclicked")
-
         }
         onReleased: {
             console.log("PlayMusic onReleased")
-            AppState.lyricsPageAnimation =true
+            AppState.lyricsPageAnimation = true
             AppState.lyricsPageVisible = true
-            AppState.lyricsPageAnimation =false
+            AppState.lyricsPageAnimation = false
         }
-
     }
 
     Item {
@@ -189,7 +188,7 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 BasicMusicPlayButton {
                     anchors.centerIn: parent
-                    icon: "qrc:/svg/Resources/playMusicFunc/shunxubofang.svg"
+                    icon: musicModel[AppState.playModeIndex]
                     iconSize: "22x22"
                     musicModel: ["qrc:/svg/Resources/playMusicFunc/shunxubofang.svg", "qrc:/svg/Resources/playMusicFunc/liebiaoxunhuan.svg", "qrc:/svg/Resources/playMusicFunc/danquxunhuan.svg", "qrc:/svg/Resources/playMusicFunc/suijibofang.svg"]
 
@@ -246,18 +245,6 @@ Rectangle {
                     onEntered: {
                         progressBar.handle.visible = true
                     }
-                    // onPressed: {
-                    //     //timeRow.currentTime = progressBar.value
-                    // }
-                    // onReleased: {
-
-                    //     PlayerController.setCurrentPosition(progressBar.value)
-                    //     timeRow.currentTime = Qt.binding(()=>{
-                    //         return PlayerController.currentPosition
-                    //     })
-                    //     console.log("666")
-                    // }
-                    // 鼠标移出时启动隐藏计时器
                     onExited: {
                         progressBar.handle.visible = false
                     }
@@ -329,7 +316,7 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
             }
             BasicMusicFuncButton {
-                id:volumeButton
+                id: volumeButton
                 imgSource: "qrc:/svg/Resources/playMusicFunc/yinliangzhong.svg"
                 anchors.verticalCenter: parent.verticalCenter
                 MouseArea {
@@ -338,31 +325,29 @@ Rectangle {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: containsMouse ? Qt.PointingHandCursor : Qt.ArrowCursor
-                    property int volume: volumeSlider.value
+
                     onClicked: {
-                        if(volumeSlider.value!==0){
-                            volume = volumeSlider.value
+                        if (volumeSlider.value !== 0) {
+                            AppState.volume = volumeSlider.value
                             volumeSlider.value = 0
-                            PlayerController.setVolume(volumeSlider.value)
-                        }else{
-                            volumeSlider.value = volume
-                            PlayerController.setVolume(volumeSlider.value)
+                            PlayerController.setCurrentVolume(0)
+                        } else {
+                            volumeSlider.value = AppState.volume
+                            PlayerController.setCurrentVolume(volumeSlider.value / 100)
                         }
                     }
 
                     onEntered: {
                         //console.log("进入1")
                         timer1.stop()
-                        isHovered =true
-
+                        isHovered = true
                     }
                     onExited: {
                         //console.log("退出1")
                         timer1.start()
-
                     }
                     Timer {
-                        id:timer1
+                        id: timer1
                         interval: 300 // .0.3秒
                         repeat: false
                         onTriggered: volumeMouseArea.isHovered = false
@@ -379,7 +364,8 @@ Rectangle {
                     //opacity: volumeMouseArea.containsMouse||volumeSliderMouseArea.containsMouse?1:0
                     Item {
                         id: volumeSliderInner
-                        property bool isHovered: volumeSliderInnerMouseArea.isHovered||volumeSliderMouseArea.isHovered
+                        property bool isHovered: volumeSliderInnerMouseArea.isHovered
+                                                 || volumeSliderMouseArea.isHovered
 
                         anchors.fill: parent
                         visible: volumeMouseArea.containsMouse || isHovered
@@ -394,12 +380,12 @@ Rectangle {
                                 isHovered = true
                             }
                             onExited: {
-                                //console.log("退出2")
 
+                                //console.log("退出2")
                                 timer2.start()
                             }
                             Timer {
-                                id:timer2
+                                id: timer2
                                 interval: 300 // .0.3秒
                                 repeat: false
                                 onTriggered: volumeSliderInnerMouseArea.isHovered = false
@@ -415,31 +401,35 @@ Rectangle {
                             anchors.bottom: parent.bottom
                         }
                         Rectangle {
+                            id: volumeRect
                             color: "#34343e"
                             width: 38
                             height: 132
                             radius: 6
                             anchors.centerIn: parent
+                            property real volume: PlayerController.currentVolume
                             Slider {
                                 id: volumeSlider
                                 orientation: Qt.Vertical
                                 anchors.centerIn: parent
                                 height: 90
-                                width:30
+                                width: 30
                                 from: 0
                                 to: 100
-                                value: PlayerController.currentVolume*100
+                                value:Math.round( volumeRect.volume * 100)
                                 stepSize: 1
                                 //rotation: 180
                                 onValueChanged: {
-                                    if(value===0){
-                                        volumeButton.imgSource = "qrc:/svg/Resources/playMusicFunc/jingyin.svg"
-                                    }else if(value <=33){
+                                    if (value === 0) {
+                                        volumeButton.imgSource
+                                                = "qrc:/svg/Resources/playMusicFunc/jingyin.svg"
+                                    } else if (value <= 33) {
                                         volumeButton.imgSource = "qrc:/svg/Resources/playMusicFunc/yinliangxiao.svg"
-                                    }else if(value<=67){
+                                    } else if (value <= 67) {
                                         volumeButton.imgSource = "qrc:/svg/Resources/playMusicFunc/yinliangzhong.svg"
-                                    }else if(value<=100){
-                                        volumeButton.imgSource = "qrc:/svg/Resources/playMusicFunc/yinliangda.svg"
+                                    } else if (value <= 100) {
+                                        volumeButton.imgSource
+                                                = "qrc:/svg/Resources/playMusicFunc/yinliangda.svg"
                                     }
                                 }
 
@@ -451,21 +441,21 @@ Rectangle {
                                     cursorShape: containsMouse ? Qt.PointingHandCursor : Qt.ArrowCursor
                                     property bool isHovered: false
                                     onEntered: {
-                                       // console.log("进入3")
+                                        // console.log("进入3")
                                         timer1.stop()
                                         isHovered = true
+                                        console.log(volumeRect.volume)
+                                        console.log(PlayerController.currentVolume)
                                     }
                                     onExited: {
-                                       // console.log("退出3")
+                                        // console.log("退出3")
                                         timer3.start()
-
                                     }
                                     Timer {
-                                        id:timer3
+                                        id: timer3
                                         interval: 300 // .0.3秒
                                         repeat: false
                                         onTriggered: volumeSliderMouseArea.isHovered = false
-
                                     }
                                 }
                                 background: Rectangle {
@@ -497,20 +487,27 @@ Rectangle {
                                 onPressedChanged: {
                                     if (pressed) {
                                         volumeSliderInner.visible = true
+                                        volumeRect.volume = value / 100
                                     } else {
                                         volumeSliderInner.visible = Qt.binding(
-                                        () => {
-                                            return  volumeMouseArea.containsMouse || volumeSliderInner.isHovered
-                                        })
+                                                    () => {
+                                                        return volumeMouseArea.containsMouse
+                                                        || volumeSliderInner.isHovered
+                                                    })
+                                        volumeRect.volume = Qt.binding(() => {
+                                                                           return PlayerController.currentVolume
+                                                                       })
                                     }
                                 }
                                 onMoved: {
-                                    PlayerController.setVolume(volumeSlider.value/100)
+                                    PlayerController.setCurrentVolume(
+                                                volumeSlider.value / 100)
+                                    //AppState.volume = volumeSlider.value
                                 }
                             }
                             Text {
                                 id: volumeSliderNumber
-                                text: qsTr(volumeSlider.value+"%")
+                                text: qsTr(volumeSlider.value + "%")
                                 color: "white"
                                 font.family: "微软雅黑"
                                 font.pixelSize: 10

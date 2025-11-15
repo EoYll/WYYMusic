@@ -54,7 +54,6 @@ Item {
                         if(rect.musicModel.length>0){
                             //console.log(musicModel.indexOf((root.index+1)%musicModel.length).toString())
                             AppState.playModeIndex = (AppState.playModeIndex+1)%rect.musicModel.length
-                            image.source = rect.musicModel[AppState.playModeIndex]
                             console.log(AppState.playModeIndex)
                         }
                         break;

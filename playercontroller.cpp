@@ -312,9 +312,11 @@ void PlayerController::previous(const QString&mode) {
     playSong(prevIndex);
 }
 
-void PlayerController::setVolume(float volume) {
+void PlayerController::setCurrentVolume(float volume) {
     m_audioOutput->setVolume(volume);
-    m_currentVolume =volume;
+    m_currentVolume = volume;
+    emit currentVolumeChanged();
+    //qDebug()<<"当前音量"<<this->m_currentVolume;
 }
 void PlayerController::setCover(){
     qDebug()<<"11";

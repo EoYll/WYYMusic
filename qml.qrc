@@ -20,5 +20,6 @@
         <file>Src/baseUI/BasicMusicFuncButton.qml</file>
         <file>Src/playMusic/LyricsPage.qml</file>
         <file>Src/basic/AppState.qml</file>
+        <file>Src/playMusic/LyricView.qml</file>
     </qresource>
 </RCC>
