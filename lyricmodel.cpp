@@ -88,7 +88,7 @@ bool LyricModel::loadLyricFile(const QString &filePath)
     m_progress = 0.0;
 
     QFile file(filePath);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+    if (!file.exists()|!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         endResetModel();
         return false;
     }

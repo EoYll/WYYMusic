@@ -8,6 +8,7 @@
 #include <QVector>
 #include <QMediaMetaData>
 #include <QDebug>
+
 #include <taglib/tag.h>
 #include <taglib/fileref.h>
 #include <taglib/mpegfile.h>
@@ -18,6 +19,30 @@
 #include <taglib/xiphcomment.h>
 #include <taglib/vorbisfile.h>
 #include <taglib/opusfile.h>
+#include <taglib/tag.h>
+#include <taglib/fileref.h>
+#include <taglib/tpropertymap.h>
+
+// 各种格式的头文件
+#include <taglib/oggfile.h>
+#include <taglib/vorbisfile.h>
+#include <taglib/opusfile.h>
+#include <taglib/flacfile.h>
+#include <taglib/mpegfile.h>
+#include <taglib/mp4file.h>
+#include <taglib/apefile.h>
+#include <taglib/wavfile.h>
+#include <taglib/aifffile.h>
+#include <taglib/modfile.h>
+#include <taglib/s3mfile.h>
+#include <taglib/itfile.h>
+#include <taglib/xmfile.h>
+#include <taglib/audioproperties.h>
+
+
+
+
+
 #include "musicmodel.h"
 #include<QRandomGenerator>
 #include"coverimageprovider.h"

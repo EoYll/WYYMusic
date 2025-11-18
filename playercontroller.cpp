@@ -38,8 +38,8 @@ PlayerController::PlayerController(QObject *parent)
         emit playingChanged();
     });
     connect(m_player,&QMediaPlayer::sourceChanged,this,[this](const QUrl &source){
-        qDebug()<<source.toString().replace(QRegularExpression("\\.ogg$"), ".lrc");
-        m_lyricModel->loadLyricFile(source.toString().replace(QRegularExpression("\\.ogg$"), ".lrc"));
+        //qDebug()<<source.toString().replace(QRegularExpression("\\.(ogg|mp3)$"), ".lrc");
+        m_lyricModel->loadLyricFile(source.toString().replace(QRegularExpression("\\.(ogg|mp3|opus|flac|m4a|mp4|ape|wav|aiff|aif)$"), ".lrc"));
     });
     // 媒体状态变化时加载元数据
     connect(m_player, &QMediaPlayer::mediaStatusChanged, this, [this](QMediaPlayer::MediaStatus status) {
@@ -103,7 +103,7 @@ void PlayerController::setDirectory(const QString &dirPath,int type) {
 }
 
 void PlayerController::scanMusicFiles(const QString &path) {
-    QtConcurrent::run([this, path]() {
+    (void)QtConcurrent::run([this, path]() {
         QDir dir(path);
         QStringList files = dir.entryList({"*.mp3", "*.wav", "*.flac", "*.ogg"}, QDir::Files);
         //QFileInfoList files = dir.entryInfoList();
@@ -143,7 +143,6 @@ void PlayerController::scanMusicFiles(const QString &path) {
                 if (vorbisFile->tag()) {
                     auto* xiph = vorbisFile->tag();
                     const TagLib::AudioProperties * audioProperties = fileRef.audioProperties();
-
                     // 处理 Vorbis 标签...
                     const QString title =  QString::fromUtf8(xiph->title().toCString(true));
                     const QString artist = QString::fromUtf8(xiph->artist().toCString(true));
@@ -167,15 +166,204 @@ void PlayerController::scanMusicFiles(const QString &path) {
                 qDebug() << "检测到 OGG Opus 文件";
                 if (opusFile->tag()) {
                     auto* xiph = opusFile->tag();
-                    qDebug()<<QString::fromUtf8(xiph->title().toCString(true));
-                    qDebug()<<QString::fromUtf8(xiph->artist().toCString(true));
-                    qDebug()<<QString::fromUtf8(xiph->album().toCString(true));
-                    qDebug()<<"\n";
-                    // 处理 Opus 标签...
+                    const TagLib::AudioProperties * audioProperties = fileRef.audioProperties();
+
+                    QString title = QString::fromUtf8(xiph->title().toCString(true));
+                    QString artist = QString::fromUtf8(xiph->artist().toCString(true));
+                    QString album = QString::fromUtf8(xiph->album().toCString(true));
+                    // 如果标题为空，使用文件名
+                    if (title.isEmpty()) {
+                        title = fileInfo.completeBaseName();
+                    }
+
+                    // 如果艺术家为空，设为未知
+                    if (artist.isEmpty()) {
+                        artist = "未知艺术家";
+                    }
+
+                    // 如果专辑为空，设为未知
+                    if (album.isEmpty()) {
+                        album = "未知专辑";
+                    }
+                    const int duration = audioProperties ? audioProperties->lengthInSeconds() : 0;
+                    const QString size = QString::number(fileInfo.size());
+
+                    QMetaObject::invokeMethod(this, [this, title, artist, album, duration,  pathFile, size]() {
+                        MusicModel::MusicItem item{
+                            title, artist, album,
+                            duration,  pathFile, size
+                        };
+                        m_musicModel->addMusicItem(item);
+                    });
+                }
+            }
+            else if (auto* flacFile = dynamic_cast<TagLib::FLAC::File*>(fileRef.file())) {
+                qDebug() << "检测到 FLAC 文件";
+                if (flacFile->tag()) {
+                    auto* tag = flacFile->tag();
+                    const TagLib::AudioProperties * audioProperties = fileRef.audioProperties();
+
+                    QString title = QString::fromUtf8(tag->title().toCString(true));
+                    QString artist = QString::fromUtf8(tag->artist().toCString(true));
+                    QString album = QString::fromUtf8(tag->album().toCString(true));
+                    // 如果标题为空，使用文件名
+                    if (title.isEmpty()) {
+                        title = fileInfo.completeBaseName();
+                    }
+
+                    // 如果艺术家为空，设为未知
+                    if (artist.isEmpty()) {
+                        artist = "未知艺术家";
+                    }
+
+                    // 如果专辑为空，设为未知
+                    if (album.isEmpty()) {
+                        album = "未知专辑";
+                    }
+                    const QString genre = QString::fromUtf8(tag->genre().toCString(true));
+                    const QString comment = QString::fromUtf8(tag->comment().toCString(true));
+                    const int duration = audioProperties ? audioProperties->lengthInSeconds() : 0;
+                    const QString size = QString::number(fileInfo.size());
+
+                    QMetaObject::invokeMethod(this, [this, title, artist, album, duration,  pathFile, size]() {
+                        MusicModel::MusicItem item{
+                            title, artist, album,
+                            duration,  pathFile, size
+                        };
+                        m_musicModel->addMusicItem(item);
+                    });
+                }
+            }
+            else if (auto* mp3File = dynamic_cast<TagLib::MPEG::File*>(fileRef.file())) {
+                qDebug() << "检测到 MP3 文件";
+                if (mp3File->tag()) {
+                    auto* tag = mp3File->ID3v1Tag(true);
+                    const TagLib::AudioProperties * audioProperties = fileRef.audioProperties();
+                    QString title = QString::fromUtf8(tag->title().toCString(true));
+                    QString artist = QString::fromUtf8(tag->artist().toCString(true));
+                    QString album = QString::fromUtf8(tag->album().toCString(true));
+                    // 如果标题为空，使用文件名
+                    if (title.isEmpty()) {
+                        title = fileInfo.completeBaseName();
+                    }
+
+                    // 如果艺术家为空，设为未知
+                    if (artist.isEmpty()) {
+                        artist = "未知艺术家";
+                    }
+
+                    // 如果专辑为空，设为未知
+                    if (album.isEmpty()) {
+                        album = "未知专辑";
+                    }
+                    const int duration = audioProperties ? audioProperties->lengthInSeconds() : 0;
+                    const QString size = QString::number(fileInfo.size());
+                    qDebug()<<title<<artist<<album<<duration<<size;
+                    qDebug()<<pathFile;
+                    QMetaObject::invokeMethod(this, [this, title, artist, album, duration,  pathFile, size]() {
+                        MusicModel::MusicItem item{
+                            title, artist, album,
+                            duration,  pathFile, size
+                        };
+                        m_musicModel->addMusicItem(item);
+                    });
+
+                }
+            }
+            else if (auto* m4aFile = dynamic_cast<TagLib::MP4::File*>(fileRef.file())) {
+                qDebug() << "检测到 M4A/MP4 文件";
+                if (m4aFile->tag()) {
+                    auto* tag = m4aFile->tag();
+                    const TagLib::AudioProperties * audioProperties = fileRef.audioProperties();
+
+                    // MP4 标签处理可能略有不同
+                    const QString title = QString::fromUtf8(tag->title().toCString(true));
+                    const QString artist = QString::fromUtf8(tag->artist().toCString(true));
+                    const QString album = QString::fromUtf8(tag->album().toCString(true));
+                    const QString genre = QString::fromUtf8(tag->genre().toCString(true));
+                    const QString comment = QString::fromUtf8(tag->comment().toCString(true));
+
+                    const int duration = audioProperties ? audioProperties->lengthInSeconds() : 0;
+                    const QString size = QString::number(fileInfo.size());
+
+                    QMetaObject::invokeMethod(this, [this, title, artist, album, duration,  pathFile, size]() {
+                        MusicModel::MusicItem item{
+                            title, artist, album,
+                            duration,  pathFile, size
+                        };
+                        m_musicModel->addMusicItem(item);
+                    });
+                }
+            }
+            else if (auto* apeFile = dynamic_cast<TagLib::APE::File*>(fileRef.file())) {
+                qDebug() << "检测到 APE 文件";
+                if (apeFile->tag()) {
+                    auto* tag = apeFile->tag();
+                    const TagLib::AudioProperties * audioProperties = fileRef.audioProperties();
+
+                    const QString title = QString::fromUtf8(tag->title().toCString(true));
+                    const QString artist = QString::fromUtf8(tag->artist().toCString(true));
+                    const QString album = QString::fromUtf8(tag->album().toCString(true));
+                    const QString genre = QString::fromUtf8(tag->genre().toCString(true));
+                    const QString comment = QString::fromUtf8(tag->comment().toCString(true));
+
+                    const int duration = audioProperties ? audioProperties->lengthInSeconds() : 0;
+                    const QString size = QString::number(fileInfo.size());
+
+                    QMetaObject::invokeMethod(this, [this, title, artist, album, duration,  pathFile, size]() {
+                        MusicModel::MusicItem item{
+                            title, artist, album,
+                            duration,  pathFile, size
+                        };
+                        m_musicModel->addMusicItem(item);
+                    });
+                }
+            }
+            else if (auto* wavFile = dynamic_cast<TagLib::RIFF::WAV::File*>(fileRef.file())) {
+                qDebug() << "检测到 WAV 文件";
+                if (wavFile->tag()) {
+                    auto* tag = wavFile->tag();
+                    const TagLib::AudioProperties * audioProperties = fileRef.audioProperties();
+
+                    const QString title = QString::fromUtf8(tag->title().toCString(true));
+                    const QString artist = QString::fromUtf8(tag->artist().toCString(true));
+                    const QString album = QString::fromUtf8(tag->album().toCString(true));
+                    const QString genre = QString::fromUtf8(tag->genre().toCString(true));
+                    const QString comment = QString::fromUtf8(tag->comment().toCString(true));
+
+                    const int duration = audioProperties ? audioProperties->lengthInSeconds() : 0;
+                    const QString size = QString::number(fileInfo.size());
+
+                    QMetaObject::invokeMethod(this, [this, title, artist, album, duration,  pathFile, size]() {
+                        MusicModel::MusicItem item{
+                            title, artist, album,
+                            duration,  pathFile, size
+                        };
+                        m_musicModel->addMusicItem(item);
+                    });
                 }
             }
             else {
-                qDebug() << "文件不是OGG格式，实际类型:" << typeid(*fileRef.file()).name();
+                qDebug() << "未知或不支持的音乐文件格式:" << pathFile;
+                // 可以尝试使用通用文件读取
+                if (fileRef.tag()) {
+                    auto* tag = fileRef.tag();
+                    const TagLib::AudioProperties * audioProperties = fileRef.audioProperties();
+
+                    const QString title = QString::fromUtf8(tag->title().toCString(true));
+                    const QString artist = QString::fromUtf8(tag->artist().toCString(true));
+                    const QString album = QString::fromUtf8(tag->album().toCString(true));
+                    const int duration = audioProperties ? audioProperties->lengthInSeconds() : 0;
+                    const QString size = QString::number(fileInfo.size());
+
+                    QMetaObject::invokeMethod(this, [this, title, artist, album, duration,  pathFile, size]() {
+                        MusicModel::MusicItem item{
+                            title, artist, album,
+                            duration,  pathFile, size
+                        };
+                        m_musicModel->addMusicItem(item);
+                    });
+                }
             }
 
         }
