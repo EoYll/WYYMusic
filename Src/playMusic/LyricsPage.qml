@@ -156,7 +156,6 @@ Rectangle {
         }
     }
     Item {
-
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: header.bottom
@@ -187,7 +186,8 @@ Rectangle {
                 anchors.top: parent.top
                 anchors.left: parent.left
                 anchors.topMargin: 20
-                height: 90
+
+                height: 70
                 Text {
                     anchors.top: parent.top
                     anchors.left: parent.left
@@ -197,20 +197,39 @@ Rectangle {
                     font.bold: true
                     color: "white"
                 }
-
-                Text {
-                    text: qsTr("专辑：" + PlayerController.currentAlbum +"  歌手：" + PlayerController.currentArtist +
-                               "  来源：本地音乐")
-                    wrapMode: Text.WordWrap  // 按单词换行
-                    font.family: "微软雅黑"
-                    font.pixelSize: 15
-                    width: 444
-                    color: "#8a8a8a"
+                Row{
                     anchors.left: parent.left
                     anchors.top: parent.top
                     anchors.topMargin:40
-                }
+                    spacing: 20
+                    Text {
+                        text: qsTr("专辑：" + PlayerController.currentAlbum)
+                        elide: Text.ElideRight
+                        font.family: "微软雅黑"
+                        font.pixelSize: 15
+                        width: 160
+                        color: "#8a8a8a"
 
+                    }
+                    Text {
+                        text: qsTr("歌手：" + PlayerController.currentArtist )
+                        elide: Text.ElideRight
+                        font.family: "微软雅黑"
+                        font.pixelSize: 15
+                        width: 120
+                        color: "#8a8a8a"
+
+                    }
+                    Text {
+                        text: qsTr("来源：本地音乐")
+                        elide: Text.ElideRight
+                        font.family: "微软雅黑"
+                        font.pixelSize: 15
+                        width: 120
+                        color: "#8a8a8a"
+
+                    }
+                }
             }
             ListView {
                 id: lyricsView
@@ -287,7 +306,7 @@ Rectangle {
                         id:lyricText
                         text: model.text// 显示文本和索引
                         wrapMode: Text.WordWrap  // 按单词换行
-                        maximumLineCount: 2  // 最大显示3行
+                        maximumLineCount: 2  // 最大显示2行
                         elide: Text.ElideRight  // 超出部分显示省略号
                         anchors.verticalCenter: parent.verticalCenter
                         color: index === lyricsView.currentIndex?"#ffffff": "#757575"
@@ -305,7 +324,7 @@ Rectangle {
                 Component.onCompleted: {
                     // 初始位置：让第一项位于中间
                     lyricsView.contentY = -(lyricsView.height / 2 - 22)
-                    updateCurrentItem()
+
 
                 }
                 // 使用Timer减少计算频率
@@ -315,37 +334,29 @@ Rectangle {
                     repeat: false
                     onTriggered: lyricsView.updateCurrentItem()
                 }
-
                 //监听滚动位置变化，但使用Timer延迟计算
                 // onContentYChanged: {
-                //     if (!updateTimer.running) {
+                //     if (!updateTimer.running&&!PlayerController.playing) {
                 //         updateTimer.start()
                 //     }
                 //     //console.log(PlayerController.lyricList.currentIndex)
                 //     //PlayerController.lyricList.setPosition(PlayerController.currentPosition)
                 // }
                 onCurrentIndexChanged: {
-                    if (currentIndex >= 0) {
-                        //var item = itemAt(0, contentY + currentIndex * (44 )+lyricsView.height / 2 - 22)
+                    if (currentIndex >= 0&&currentIndex< lyricsView.count &&PlayerController.playing) {
                         contentY = currentIndex*44-(lyricsView.height / 2 - 22)
-                        //updateCurrentItem()
                     }
-                    }
+                }
                 Behavior on contentY {
+                    enabled:PlayerController.playing
                     NumberAnimation { duration: 500; easing.type: Easing.InOutQuad }
                 }
                 // 滚动结束时立即更新
                 // onMovementEnded: {
-                //     // if (contentY < -topMargin) {
-                //     //     contentY = -topMargin
-                //     // }
-                //     // var maxContentY = contentHeight - height + bottomMargin
-                //     // if (contentY > maxContentY) {
-                //     //     contentY = maxContentY
-                //     // }
-
-                //     updateTimer.stop() // 停止计时器
-                //     updateCurrentItem() // 立即更新
+                //     if(!PlayerController.playing){
+                //         updateTimer.stop() // 停止计时器
+                //         updateCurrentItem() // 立即更新
+                //     }
                 // }
 
                 // ScrollBar.vertical: ScrollBar {
@@ -353,44 +364,45 @@ Rectangle {
                 // }
 
                 // 函数：更新当前选中项
-                function updateCurrentItem() {
-                    var listCenterY = lyricsView.height / 2
-                    var minDistance = Number.MAX_VALUE
-                    var closestIndex = lyricsView.currentIndex
-                    // 默认保持当前选中
-                    // 只检查可见区域附近的项，提高性能
-                    var startIndex = Math.max(0, Math.floor(
-                                                  lyricsView.contentY / 44) - 2)
-                    var endIndex = Math.min(
-                                lyricsView.count - 1, Math.ceil(
-                                    (lyricsView.contentY + lyricsView.height) / 44) + 2)
+                // function updateCurrentItem() {
+                //     var listCenterY = lyricsView.height / 2
+                //     var minDistance = Number.MAX_VALUE
+                //     var closestIndex = lyricsView.currentIndex
+                //     // 默认保持当前选中
+                //     // 只检查可见区域附近的项，提高性能
+                //     var startIndex = Math.max(0, Math.floor(
+                //                                   lyricsView.contentY / 44) - 2)
+                //     var endIndex = Math.min(
+                //                 lyricsView.count - 1, Math.ceil(
+                //                     (lyricsView.contentY + lyricsView.height) / 44) + 2)
 
-                    for (var i = startIndex; i <= endIndex; i++) {
-                        var item = lyricsView.itemAt(lyricsView.width / 2,
-                                                   i * 44 + 22)
-                        // 获取项中心点
-                        if (item) {
-                            var itemCenterY = item.mapToItem(lyricsView, 0,
-                                                             item.height / 2).y
-                            var distance = Math.abs(itemCenterY - listCenterY)
+                //     for (var i = startIndex; i <= endIndex; i++) {
+                //         var item = lyricsView.itemAt(lyricsView.width / 2,
+                //                                    i * 44 + 22)
+                //         // 获取项中心点
+                //         if (item) {
+                //             var itemCenterY = item.mapToItem(lyricsView, 0,
+                //                                              item.height / 2).y
+                //             var distance = Math.abs(itemCenterY - listCenterY)
 
-                            if (distance < minDistance) {
-                                minDistance = distance
-                                closestIndex = i
-                            }
-                        }
-                    }
-                    // 更新选中项
-                    if (closestIndex !== lyricsView.currentIndex) {
-                        lyricsView.currentIndex = closestIndex
-                        lyricsView.currentIndex = Qt.binding(()=>{
-                                                              return   PlayerController.lyricList.currentIndex;
-                                                             })
-                    }
-                }
+                //             if (distance < minDistance) {
+                //                 minDistance = distance
+                //                 closestIndex = i
+                //             }
+                //         }
+                //     }
+                //     // 更新选中项
+                //     if (closestIndex !== lyricsView.currentIndex) {
+                //         lyricsView.currentIndex = closestIndex
+                //         lyricsView.currentIndex = Qt.binding(()=>{
+                //             return   PlayerController.lyricList.currentIndex;
+                //         })
+                //     }
+                // }
             }
         }
     }
+
     Rectangle {
         id: bottomRectange
         anchors.left: parent.left
@@ -409,6 +421,90 @@ Rectangle {
                 AppState.lyricsPageAnimation = true
                 AppState.lyricsPageVisible = false
                 AppState.lyricsPageAnimation = false
+            }
+        }
+        Item {
+            id: progressBar
+            width: parent.width
+            height:2
+            anchors.top: parent.top
+            property real currentTime: PlayerController.currentPosition // 当前播放时间（秒）
+            property real totalTime: PlayerController.duration // 总时长（秒）
+            // // 格式化时间（秒）为 mm:ss 格式
+            // function formatTime(seconds) {
+            //     seconds /= 1000
+            //     var minutes = Math.floor(seconds / 60)
+            //     var secs = Math.floor(seconds % 60)
+            //     return minutes.toString().padStart(2,
+            //                                        '0') + ":" + secs.toString(
+            //                 ).padStart(2, '0')
+            // }
+            Slider {
+                id: progressSlider
+                anchors.verticalCenter: parent.verticalCenter
+                //anchors.margins: 10
+                width: parent.width
+                from: 0
+                to: timeRow.totalTime
+                value: timeRow.currentTime
+                MouseArea {
+                    id: sliderMouseArea
+                    anchors.fill: parent
+                    hoverEnabled: true // 启用悬停检测
+                    acceptedButtons: Qt.NoButton // 不处理按钮事件，只用于悬停检测
+                    cursorShape: containsMouse ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    // 鼠标进入时显示手柄
+                    onEntered: {
+                        progressSlider.handle.visible = true
+                    }
+                    onExited: {
+                        progressSlider.handle.visible = false
+                    }
+                }
+
+                onPressedChanged: {
+                    if (pressed) {
+                        timeRow.currentTime = value
+                    } else {
+                        PlayerController.setCurrentPosition(value)
+                        timeRow.currentTime = Qt.binding(() => {
+                                                             return PlayerController.currentPosition
+                                                         })
+                    }
+                }
+
+                // 自定义样式（可选）
+                background: Rectangle {
+                    x: progressSlider.leftPadding
+                    y: progressSlider.topPadding + progressSlider.availableHeight / 2 - height / 2
+                    width: progressSlider.availableWidth
+                    height: 4
+                    radius: 2
+                    color: "transparent"
+
+                    Rectangle {
+                        width: progressSlider.visualPosition * parent.width
+                        height:sliderMouseArea.containsMouse? parent.height+2:parent.height
+                        radius: 2
+                        gradient: Gradient {
+                                orientation: Gradient.Horizontal  // 水平渐变
+                                GradientStop { position: 0.0; color: "#232323" }     // 左端黑色
+                                GradientStop { position: 1.0; color: "#616161" }     // 右端白色
+                            }
+                    }
+                }
+
+                handle: Rectangle {
+                    x: progressSlider.leftPadding + progressSlider.visualPosition
+                       * progressSlider.availableWidth - width / 2
+                    y: progressSlider.topPadding + progressSlider.availableHeight / 2 - height / 2
+                    implicitWidth: 12
+                    implicitHeight: 12
+                    radius: 8
+                    color: progressSlider.pressed ? "#f0f0f0" : "#f6f6f6"
+                    border.color: "#bdbebf"
+                    visible: false
+                }
             }
         }
         Item {

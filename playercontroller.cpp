@@ -49,35 +49,35 @@ PlayerController::PlayerController(QObject *parent)
             next(playMode);
         }
     });
-    int fadeDuration = 2000;
-    QTimer *fadeInTimer = new QTimer(this);
-    fadeInTimer->setInterval(50);
-    connect(fadeInTimer,&QTimer::timeout,this,[this,fadeDuration,fadeInTimer](){
+    // int fadeDuration = 2000;
+    // QTimer *fadeInTimer = new QTimer(this);
+    // fadeInTimer->setInterval(50);
+    // connect(fadeInTimer,&QTimer::timeout,this,[this,fadeDuration,fadeInTimer](){
 
-        qint64 elapsed = QDateTime::currentMSecsSinceEpoch()-m_fadeStartTime;
-        qreal t = static_cast<qreal>(elapsed) / fadeDuration;
-        //qDebug()<<elapsed;
-        if(t>=1.0){
-            fadeInTimer->stop();
-            this->m_audioOutput->setVolume(m_currentVolume);
-            m_state = PlayingState;
-            return;
-        }
+    //     qint64 elapsed = QDateTime::currentMSecsSinceEpoch()-m_fadeStartTime;
+    //     qreal t = static_cast<qreal>(elapsed) / fadeDuration;
+    //     //qDebug()<<elapsed;
+    //     if(t>=1.0){
+    //         fadeInTimer->stop();
+    //         this->m_audioOutput->setVolume(m_currentVolume);
+    //         m_state = PlayingState;
+    //         return;
+    //     }
 
-        qreal volume = logarithmicInterpolation(0.001, m_currentVolume, t);
-        m_audioOutput->setVolume(volume);
-    });
+    //     qreal volume = logarithmicInterpolation(0.001, m_currentVolume, t);
+    //     m_audioOutput->setVolume(volume);
+    // });
 
 
-    connect(m_player,&QMediaPlayer::playingChanged,this,[fadeInTimer,this](bool playing){
-        if(playing){
-            this->m_audioOutput->setVolume(0);
-            fadeInTimer->start();
-            m_fadeStartTime= QDateTime::currentMSecsSinceEpoch();
-            //qDebug()<<"调用";
-        }
+    // connect(m_player,&QMediaPlayer::playingChanged,this,[fadeInTimer,this](bool playing){
+    //     if(playing){
+    //         this->m_audioOutput->setVolume(0);
+    //         fadeInTimer->start();
+    //         m_fadeStartTime= QDateTime::currentMSecsSinceEpoch();
+    //         //qDebug()<<"调用";
+    //     }
 
-    });
+    // });
 
 }
 
@@ -221,41 +221,46 @@ void PlayerController::loadMetaData() {
 }
 
 void PlayerController::play() {
-    if(m_state == StoppedState||m_state == PausedState){
-        if (m_currentIndex >= 0 && m_currentIndex < m_musicModel->musicList().size()) {
 
-            m_player->play();
-            m_state = FadingInState;
-        }
-    }
+    m_player->play();
+    // if(m_state == StoppedState||m_state == PausedState){
+    //     if (m_currentIndex >= 0 && m_currentIndex < m_musicModel->musicList().size()) {
+
+    //         m_player->play();
+    //         m_state = FadingInState;
+    //     }
+    // }
 }
 
 void PlayerController::pause() {
-    if(m_state!=PlayingState){
-        return;
-    }
-    QTimer *fadeOutTimer = new QTimer(this);
-    fadeOutTimer->setInterval(50); // 每50毫秒更新一次
-    int fadeDuration = 2000;
-    connect(fadeOutTimer, &QTimer::timeout, this, [this, fadeDuration, fadeOutTimer]() {
-        qint64 elapsed = QDateTime::currentMSecsSinceEpoch() - m_fadeStartTime;
-        qreal t = static_cast<qreal>(elapsed) / fadeDuration;
-        if (t >= 1.0) {
-            fadeOutTimer->stop();
-            this->m_audioOutput->setVolume(0.0); // 最终设置为0
-            m_player->pause();
-            m_state = PausedState;
-            // 淡出完成后，可以停止播放等操作
-            // 例如：this->stop();
-            return;
-        }
-        // 使用对数插值计算当前音量（从startVolume到0.001）
-        qreal volume = logarithmicInterpolation(m_currentVolume, 0.001, t);
-        m_audioOutput->setVolume(volume);
-    });
-    m_fadeStartTime= QDateTime::currentMSecsSinceEpoch();
-    fadeOutTimer->start();
-    m_state = FadingOutState;
+    m_player->pause();
+
+
+    // if(m_state!=PlayingState){
+    //     return;
+    // }
+    // QTimer *fadeOutTimer = new QTimer(this);
+    // fadeOutTimer->setInterval(50); // 每50毫秒更新一次
+    // int fadeDuration = 2000;
+    // connect(fadeOutTimer, &QTimer::timeout, this, [this, fadeDuration, fadeOutTimer]() {
+    //     qint64 elapsed = QDateTime::currentMSecsSinceEpoch() - m_fadeStartTime;
+    //     qreal t = static_cast<qreal>(elapsed) / fadeDuration;
+    //     if (t >= 1.0) {
+    //         fadeOutTimer->stop();
+    //         this->m_audioOutput->setVolume(0.0); // 最终设置为0
+    //         m_player->pause();
+    //         m_state = PausedState;
+    //         // 淡出完成后，可以停止播放等操作
+    //         // 例如：this->stop();
+    //         return;
+    //     }
+    //     // 使用对数插值计算当前音量（从startVolume到0.001）
+    //     qreal volume = logarithmicInterpolation(m_currentVolume, 0.001, t);
+    //     m_audioOutput->setVolume(volume);
+    // });
+    // m_fadeStartTime= QDateTime::currentMSecsSinceEpoch();
+    // fadeOutTimer->start();
+    // m_state = FadingOutState;
 
 }
 
