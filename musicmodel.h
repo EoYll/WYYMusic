@@ -19,6 +19,7 @@ public:
         bool isFavorite = false;// 是否收藏
         int trackNumber = 0;    // 曲目编号
         QString fileSize;       //文件大小
+
         // 构造函数
         MusicItem() = default;
         MusicItem(const QString &title, const QString &artist, const QString &album,

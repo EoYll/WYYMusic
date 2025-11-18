@@ -29,6 +29,7 @@ PlayerController::PlayerController(QObject *parent)
     m_audioOutput = new QAudioOutput(this);
     m_player->setAudioOutput(m_audioOutput);
     m_musicModel =new MusicModel(this);
+    m_lyricModel = new LyricModel(this);
     m_audioOutput->setVolume(0);
     // 连接信号
     connect(m_player, &QMediaPlayer::positionChanged, this, &PlayerController::positionChanged);
@@ -36,7 +37,10 @@ PlayerController::PlayerController(QObject *parent)
     connect(m_player, &QMediaPlayer::playbackStateChanged, this, [this]() {
         emit playingChanged();
     });
-
+    connect(m_player,&QMediaPlayer::sourceChanged,this,[this](const QUrl &source){
+        qDebug()<<source.toString().replace(QRegularExpression("\\.ogg$"), ".lrc");
+        m_lyricModel->loadLyricFile(source.toString().replace(QRegularExpression("\\.ogg$"), ".lrc"));
+    });
     // 媒体状态变化时加载元数据
     connect(m_player, &QMediaPlayer::mediaStatusChanged, this, [this](QMediaPlayer::MediaStatus status) {
         if (status == QMediaPlayer::LoadedMedia) {
@@ -63,11 +67,6 @@ PlayerController::PlayerController(QObject *parent)
         qreal volume = logarithmicInterpolation(0.001, m_currentVolume, t);
         m_audioOutput->setVolume(volume);
     });
-
-
-
-
-
 
 
     connect(m_player,&QMediaPlayer::playingChanged,this,[fadeInTimer,this](bool playing){
@@ -104,97 +103,94 @@ void PlayerController::setDirectory(const QString &dirPath,int type) {
 }
 
 void PlayerController::scanMusicFiles(const QString &path) {
-    QDir dir(path);
-    QStringList files = dir.entryList({"*.mp3", "*.wav", "*.flac", "*.ogg"}, QDir::Files);
-    //QFileInfoList files = dir.entryInfoList();
-    m_musicModel->clear();
-
-    for (auto &file : files) {
-        qDebug()<<file;
-        QString pathFile = path + "/" + file;
-
-
-        #ifdef Q_OS_WIN
-            TagLib::FileRef fileRef(reinterpret_cast<const wchar_t*>(pathFile.utf16()));
-        #else
-            TagLib::FileRef fileRef(pathFile.toUtf8().constData());
-        #endif
-        // 检查文件是否存在
-        QFileInfo fileInfo(pathFile);
-        if (!fileInfo.exists()) {
-            qDebug() << "文件不存在:" << path;
-            qDebug()<<"\n";
-            continue;
-        }
-
-        // 检查文件是否可读
-        if (!fileInfo.isReadable()) {
-            qDebug() << "文件不可读:" << path;
-            qDebug()<<"\n";
-            continue;
-        }
-        if (fileRef.isNull()) {
-            qDebug() << "无法打开文件";
-            qDebug()<<"\n";
-            continue;
-        }
-        qDebug()<<"222";
-        // 动态检测并转换为具体的 OGG 类型
-        if (auto* vorbisFile = dynamic_cast<TagLib::Ogg::Vorbis::File*>(fileRef.file())) {
-            qDebug() << "检测到 OGG Vorbis 文件";
-            if (vorbisFile->tag()) {
-                auto* xiph = vorbisFile->tag();
-                const TagLib::AudioProperties * audioProperties = fileRef.audioProperties();
-                // qDebug()<<QString::fromUtf8(xiph->title().toCString(true));
-                // qDebug()<<QString::fromUtf8(xiph->artist().toCString(true));
-                // qDebug()<<QString::fromUtf8(xiph->album().toCString(true));
-                // qDebug()<<"\n";
-                // 处理 Vorbis 标签...
-                const QString title =  QString::fromUtf8(xiph->title().toCString(true));
-                const QString artist = QString::fromUtf8(xiph->artist().toCString(true));
-                const QString album = QString::fromUtf8(xiph->album().toCString(true));
-                const int duration =  audioProperties->lengthInSeconds();
-                const QString size = QString::number(fileInfo.size());
-                // 在获取图片列表前添加检查
-                if (!vorbisFile || !xiph) {
-                    qWarning() << "无效的文件指针";
-                    return;
-                }
-                // // 获取图片列表
-                // TagLib::List<TagLib::FLAC::Picture*> pictureList = xiph->pictureList();
-                // qDebug()<<"一共"<<pictureList.size()<<"张图片";
+    QtConcurrent::run([this, path]() {
+        QDir dir(path);
+        QStringList files = dir.entryList({"*.mp3", "*.wav", "*.flac", "*.ogg"}, QDir::Files);
+        //QFileInfoList files = dir.entryInfoList();
+        m_musicModel->clear();
+        for (auto &file : files) {
+            qDebug()<<file;
+            QString pathFile = path + "/" + file;
 
 
-                MusicModel::MusicItem item{title,artist,album,duration,pathFile,size};
-                m_musicModel->addMusicItem(item);
-
-            }
-        }
-        else if (auto* opusFile = dynamic_cast<TagLib::Ogg::Opus::File*>(fileRef.file())) {
-            qDebug() << "检测到 OGG Opus 文件";
-            if (opusFile->tag()) {
-                auto* xiph = opusFile->tag();
-                qDebug()<<QString::fromUtf8(xiph->title().toCString(true));
-                qDebug()<<QString::fromUtf8(xiph->artist().toCString(true));
-                qDebug()<<QString::fromUtf8(xiph->album().toCString(true));
+            #ifdef Q_OS_WIN
+                        TagLib::FileRef fileRef(reinterpret_cast<const wchar_t*>(pathFile.utf16()));
+            #else
+                        TagLib::FileRef fileRef(pathFile.toUtf8().constData());
+            #endif
+            // 检查文件是否存在
+            QFileInfo fileInfo(pathFile);
+            if (!fileInfo.exists()) {
+                qDebug() << "文件不存在:" << path;
                 qDebug()<<"\n";
-                // 处理 Opus 标签...
+                continue;
             }
-        }
-        else {
-            qDebug() << "文件不是OGG格式，实际类型:" << typeid(*fileRef.file()).name();
-        }
-    }
 
-    emit musicListChanged();
+            // 检查文件是否可读
+            if (!fileInfo.isReadable()) {
+                qDebug() << "文件不可读:" << path;
+                qDebug()<<"\n";
+                continue;
+            }
+            if (fileRef.isNull()) {
+                qDebug() << "无法打开文件";
+                qDebug()<<"\n";
+                continue;
+            }
+            // 动态检测并转换为具体的 OGG 类型
+            if (auto* vorbisFile = dynamic_cast<TagLib::Ogg::Vorbis::File*>(fileRef.file())) {
+                qDebug() << "检测到 OGG Vorbis 文件";
+                if (vorbisFile->tag()) {
+                    auto* xiph = vorbisFile->tag();
+                    const TagLib::AudioProperties * audioProperties = fileRef.audioProperties();
 
-    //如果有歌曲，设置当前索引为0
-    if (!m_musicModel->musicList().isEmpty()) {
-        m_currentIndex = 0;
-        emit currentIndexChanged();
-        m_player->setSource(m_musicModel->musicList()[m_currentIndex].filePath);
-        qDebug()<<"读取了歌曲"<<m_musicModel->musicList()[m_currentIndex].filePath;
-    }
+                    // 处理 Vorbis 标签...
+                    const QString title =  QString::fromUtf8(xiph->title().toCString(true));
+                    const QString artist = QString::fromUtf8(xiph->artist().toCString(true));
+                    const QString album = QString::fromUtf8(xiph->album().toCString(true));
+                    const int duration =  audioProperties->lengthInSeconds();
+                    const QString size = QString::number(fileInfo.size());
+                    // 在获取图片列表前添加检查
+                    if (!vorbisFile || !xiph) {
+                        qWarning() << "无效的文件指针";
+                        return;
+                    }
+                     // 在主线程更新UI
+                    QMetaObject::invokeMethod(this, [this, title, artist, album, duration, pathFile, size]() {
+                        MusicModel::MusicItem item{title, artist, album, duration, pathFile, size};
+                        m_musicModel->addMusicItem(item);
+                    });
+
+                }
+            }
+            else if (auto* opusFile = dynamic_cast<TagLib::Ogg::Opus::File*>(fileRef.file())) {
+                qDebug() << "检测到 OGG Opus 文件";
+                if (opusFile->tag()) {
+                    auto* xiph = opusFile->tag();
+                    qDebug()<<QString::fromUtf8(xiph->title().toCString(true));
+                    qDebug()<<QString::fromUtf8(xiph->artist().toCString(true));
+                    qDebug()<<QString::fromUtf8(xiph->album().toCString(true));
+                    qDebug()<<"\n";
+                    // 处理 Opus 标签...
+                }
+            }
+            else {
+                qDebug() << "文件不是OGG格式，实际类型:" << typeid(*fileRef.file()).name();
+            }
+
+        }
+        // 扫描完成
+        QMetaObject::invokeMethod(this, [this]() {
+            emit musicListChanged();
+            if (!m_musicModel->musicList().isEmpty()) {
+                m_currentIndex = 0;
+                emit currentIndexChanged();
+                m_player->setSource(m_musicModel->musicList()[m_currentIndex].filePath);
+            }
+            emit scanFinished();
+        });
+
+    });
 }
 
 void PlayerController::loadMetaData() {
@@ -395,7 +391,9 @@ int PlayerController::currentIndex() const {
 MusicModel* PlayerController::musicList()const{
     return m_musicModel;
 }
-
+LyricModel*PlayerController:: lyricList() const{
+    return m_lyricModel;
+}
 
 void PlayerController::setCurrentPosition(int position) {
     m_player->setPosition(position);

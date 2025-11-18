@@ -187,7 +187,7 @@ Rectangle {
                 anchors.top: parent.top
                 anchors.left: parent.left
                 anchors.topMargin: 20
-                height: 70
+                height: 90
                 Text {
                     anchors.top: parent.top
                     anchors.left: parent.left
@@ -197,31 +197,20 @@ Rectangle {
                     font.bold: true
                     color: "white"
                 }
-                Row {
+
+                Text {
+                    text: qsTr("专辑：" + PlayerController.currentAlbum +"  歌手：" + PlayerController.currentArtist +
+                               "  来源：本地音乐")
+                    wrapMode: Text.WordWrap  // 按单词换行
+                    font.family: "微软雅黑"
+                    font.pixelSize: 15
+                    width: 444
+                    color: "#8a8a8a"
                     anchors.left: parent.left
-                    anchors.bottom: parent.bottom
-                    spacing: 20
-                    Text {
-                        text: qsTr("专辑：" + PlayerController.currentAlbum)
-                        font.family: "微软雅黑"
-                        font.pixelSize: 15
-
-                        color: "#8a8a8a"
-                    }
-                    Text {
-                        text: qsTr("歌手：" + PlayerController.currentAlbum)
-                        font.family: "微软雅黑"
-                        font.pixelSize: 15
-
-                        color: "#8a8a8a"
-                    }
-                    Text {
-                        text: qsTr("来源：本地音乐")
-                        font.family: "微软雅黑"
-                        font.pixelSize: 15
-                        color: "#8a8a8a"
-                    }
+                    anchors.top: parent.top
+                    anchors.topMargin:40
                 }
+
             }
             ListView {
                 id: lyricsView
@@ -230,13 +219,30 @@ Rectangle {
                 anchors.top: message.bottom
                 anchors.bottom: parent.bottom
                 anchors.rightMargin: 100
-                model: 20
                 clip: true
-
+                model: PlayerController.lyricList
+                currentIndex:PlayerController.lyricList.currentIndex
                 header: Item {
                     width: lyricsView.width
                     height: lyricsView.height / 2 - 22 // 使得第一项可以滚动到中间
                 }
+                Timer {
+                    id: lyricSyncTimer
+                    interval: 200 // 调整为 200ms，减少频率
+                    repeat: true
+                    running: PlayerController.playing // 默认不运行，根据需要启动
+
+                    onTriggered: {
+                        // 添加空指针检查
+                        if (PlayerController &&
+                            PlayerController.lyricList &&
+                            PlayerController.currentPosition !== undefined) {
+
+                            PlayerController.lyricList.setPosition(PlayerController.currentPosition)
+                        }
+                    }
+                }
+
                 delegate: Rectangle {
                     // 委托：每个项目都是一个矩形
                     width: lyricsView.width // 宽度与ListView相同
@@ -278,12 +284,17 @@ Rectangle {
                     // 使用选择的函数计算透明度
                     //property real textOpacity:
                     Text {
-                        text: "项目 " + index // 显示文本和索引
+                        id:lyricText
+                        text: model.text// 显示文本和索引
+                        wrapMode: Text.WordWrap  // 按单词换行
+                        maximumLineCount: 2  // 最大显示3行
+                        elide: Text.ElideRight  // 超出部分显示省略号
                         anchors.verticalCenter: parent.verticalCenter
                         color: index === lyricsView.currentIndex?"#ffffff": "#757575"
                         font.family: "微软雅黑"
-                        font.pixelSize:index === lyricsView.currentIndex?23:20
+                        font.pixelSize:index === lyricsView.currentIndex?22:17
                         opacity: calculateOpacity(distanceToCenter, lyricsView.height/2)
+                        width: parent.width
                     }
                 }
                 footer: Item {
@@ -305,26 +316,37 @@ Rectangle {
                     onTriggered: lyricsView.updateCurrentItem()
                 }
 
-                // 监听滚动位置变化，但使用Timer延迟计算
-                onContentYChanged: {
-                    if (!updateTimer.running) {
-                        updateTimer.start()
+                //监听滚动位置变化，但使用Timer延迟计算
+                // onContentYChanged: {
+                //     if (!updateTimer.running) {
+                //         updateTimer.start()
+                //     }
+                //     //console.log(PlayerController.lyricList.currentIndex)
+                //     //PlayerController.lyricList.setPosition(PlayerController.currentPosition)
+                // }
+                onCurrentIndexChanged: {
+                    if (currentIndex >= 0) {
+                        //var item = itemAt(0, contentY + currentIndex * (44 )+lyricsView.height / 2 - 22)
+                        contentY = currentIndex*44-(lyricsView.height / 2 - 22)
+                        //updateCurrentItem()
                     }
+                    }
+                Behavior on contentY {
+                    NumberAnimation { duration: 500; easing.type: Easing.InOutQuad }
                 }
-
                 // 滚动结束时立即更新
-                onMovementEnded: {
-                    // if (contentY < -topMargin) {
-                    //     contentY = -topMargin
-                    // }
-                    // var maxContentY = contentHeight - height + bottomMargin
-                    // if (contentY > maxContentY) {
-                    //     contentY = maxContentY
-                    // }
+                // onMovementEnded: {
+                //     // if (contentY < -topMargin) {
+                //     //     contentY = -topMargin
+                //     // }
+                //     // var maxContentY = contentHeight - height + bottomMargin
+                //     // if (contentY > maxContentY) {
+                //     //     contentY = maxContentY
+                //     // }
 
-                    updateTimer.stop() // 停止计时器
-                    updateCurrentItem() // 立即更新
-                }
+                //     updateTimer.stop() // 停止计时器
+                //     updateCurrentItem() // 立即更新
+                // }
 
                 // ScrollBar.vertical: ScrollBar {
                 //     policy: ScrollBar.AsNeeded
@@ -336,7 +358,6 @@ Rectangle {
                     var minDistance = Number.MAX_VALUE
                     var closestIndex = lyricsView.currentIndex
                     // 默认保持当前选中
-
                     // 只检查可见区域附近的项，提高性能
                     var startIndex = Math.max(0, Math.floor(
                                                   lyricsView.contentY / 44) - 2)
@@ -361,8 +382,10 @@ Rectangle {
                     }
                     // 更新选中项
                     if (closestIndex !== lyricsView.currentIndex) {
-
                         lyricsView.currentIndex = closestIndex
+                        lyricsView.currentIndex = Qt.binding(()=>{
+                                                              return   PlayerController.lyricList.currentIndex;
+                                                             })
                     }
                 }
             }

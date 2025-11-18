@@ -6,6 +6,7 @@ QT += widgets
 CONFIG += c++17
 SOURCES += \
         coverimageprovider.cpp \
+        lyricmodel.cpp \
         main.cpp \
         musicmodel.cpp \
         playercontroller.cpp \
@@ -40,6 +41,7 @@ DISTFILES += \
 
 HEADERS += \
     coverimageprovider.h \
+    lyricmodel.h \
     musicmodel.h \
     playercontroller.h \
     windowhelper.h

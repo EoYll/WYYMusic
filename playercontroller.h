@@ -21,6 +21,8 @@
 #include "musicmodel.h"
 #include<QRandomGenerator>
 #include"coverimageprovider.h"
+#include <QtConcurrent/QtConcurrentRun>
+#include"lyricmodel.h"
 class PlayerController : public QObject {
     Q_OBJECT
 
@@ -34,9 +36,9 @@ class PlayerController : public QObject {
     Q_PROPERTY(int currentIndex READ currentIndex NOTIFY currentIndexChanged)
     Q_PROPERTY(float currentVolume READ currentVolume WRITE setCurrentVolume NOTIFY currentVolumeChanged)
     // Q_PROPERTY(MusicModel m_musicModel  READ musicList NOTIFY musicListChanged)
-    Q_PROPERTY(MusicModel* musicList READ musicList CONSTANT)
+    Q_PROPERTY(MusicModel* musicList READ musicList NOTIFY musicListChanged)
     Q_PROPERTY(QString coverSource READ coverSource NOTIFY coverChanged)
-
+    Q_PROPERTY(LyricModel* lyricList READ lyricList NOTIFY lyricListChanged)
 public:
     static PlayerController* instance();
     enum PlayerState {
@@ -55,6 +57,7 @@ public:
     bool isPlaying() const;
     int currentIndex() const;
     MusicModel* musicList() const;
+    LyricModel* lyricList() const;
     CoverImageProvider* imageProvider() const;
     QString coverSource() const;
     float currentVolume()const;
@@ -71,6 +74,7 @@ public:
 
 signals:
     void musicListChanged();
+    void lyricListChanged();
     void currentSongChanged();
     void positionChanged();
     void durationChanged();
@@ -79,6 +83,7 @@ signals:
     void metaDataLoaded();
     void coverChanged();
     void currentVolumeChanged();
+    void scanFinished();
 public slots:
     void setCurrentPosition(int position);
     void setCurrentVolume(float volume);
@@ -93,6 +98,7 @@ private:
     QAudioOutput *m_audioOutput;
     CoverImageProvider* m_imageProvider;
     MusicModel *m_musicModel;
+    LyricModel *m_lyricModel;
     QString m_currentDirectory;
     QString playMode="ORDER";
     QString m_dirPath;
